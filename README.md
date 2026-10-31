@@ -1,7 +1,7 @@
-# Recon---BeGuardit-Hacking-Tools
+# Recon
 
-The BeGuardit Hacking Tools toolchain: a local, authorization-gated security
-platform built and verified on Apple Silicon.
+**BeGuardit Hacking Tools** — the local, authorization-gated security platform
+built and verified on Apple Silicon.
 
 **Created by Parth Patel, founder of BenchBrex.com** (BeGuardit / BenchBrex).
 
