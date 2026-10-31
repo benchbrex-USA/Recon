@@ -1,0 +1,34 @@
+Copyright (c) 2026 Parth Patel, founder of BenchBrex.com (BeGuardit / BenchBrex).
+All rights reserved.
+
+1. PROPRIETARY SOFTWARE. This repository and its contents (the "Software") are
+   proprietary and confidential to BeGuardit / BenchBrex. They are made
+   available in this repository solely to the repository owner and to persons
+   expressly authorized in writing by the copyright holder.
+
+2. NO LICENSE GRANTED. No right is granted to use, copy, modify, merge,
+   publish, distribute, sublicense, sell, or create derivative works from the
+   Software, in source or binary form, except as stated in section 1. Any
+   such act without express written permission is prohibited.
+
+3. AUTHORIZED-USE RESTRICTION. The Software includes security-assessment
+   capabilities (network reconnaissance, exploit training exercises, and
+   AI red-team tooling). It may only be operated against systems and agents
+   that the operator owns or has express written authorization to assess.
+   Operation against third-party systems without authorization is prohibited
+   by this license and may violate applicable law.
+
+4. EXPORT / COMPLIANCE. The Software is dual-use security technology.
+   Export, transfer, or use may be subject to applicable export-control and
+   sanctions laws; the recipient is responsible for compliance.
+
+5. NO WARRANTY. The Software is provided "AS IS", WITHOUT WARRANTY OF ANY
+   KIND, express or implied, including but not limited to the warranties of
+   merchantability, fitness for a particular purpose, and non-infringement.
+   In no event shall the copyright holder be liable for any claim, damages,
+   or other liability arising from the Software.
+
+6. CONTACT. Licensing and authorization inquiries: Parth Patel, BenchBrex —
+   via the repository owner (benchbrex-USA).
+
+SPDX-License-Identifier: LicenseRef-Proprietary-BenchBrex

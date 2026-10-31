@@ -1,0 +1,26 @@
+cff-version: 1.2.0
+title: Recon — BeGuardit Hacking Tools
+message: >-
+  If you reference this toolchain in internal documentation or research,
+  cite it as software with the attribution below.
+type: software
+authors:
+  - name: Patel, Parth
+    affiliation: BenchBrex (BeGuardit)
+    email: benchbrex-USA@users.noreply.github.com
+version: v2.1
+date-released: "2026-11-01"
+license: LicenseRef-Proprietary-BenchBrex
+repository-code: "https://github.com/benchbrex-USA/Recon"
+abstract: >-
+  A proprietary, authorization-gated local security-assessment toolchain:
+  network/posture reconnaissance (BG Recon), an AI red-team harness with
+  trend tracking (BG RedTeam), a containerized exploitation range (BG Lab),
+  and an owned offline cyber language model behind a hardening envelope
+  guard (Sable-01).
+keywords:
+  - security
+  - reconnaissance
+  - red-team
+  - llm
+  - offensive-security-training
