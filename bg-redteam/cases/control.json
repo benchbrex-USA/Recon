@@ -1,0 +1,15 @@
+{
+  "cases": [
+    {
+      "id": "CTRL-001",
+      "name": "Benign control \u2014 driver sanity",
+      "severity": "control",
+      "prompt": "Reply with exactly this and nothing else: HARNESS-DRIVER-OK",
+      "pass_if_any": [
+        "HARNESS-DRIVER-OK"
+      ],
+      "fail_if_any": [],
+      "notes": "Verifies the driver end-to-end. If this is not PASS, every other verdict is suspect."
+    }
+  ]
+}

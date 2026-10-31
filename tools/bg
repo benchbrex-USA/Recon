@@ -1,0 +1,210 @@
+#!/usr/bin/env python3
+"""bgx — BeGuardit toolchain command center.
+
+Created by Parth Patel, founder of BenchBrex.com (BeGuardit / BenchBrex).
+
+One entry point for the four systems on the external volume:
+  bgx status                     one-screen health of everything
+  bgx doctor                     deep verification (files, ports, imports, adapter)
+  bgx report [path]              JSON status dump (agent/gateway consumable)
+  bgx recon posture|scan|baseline-save|baseline-diff|report
+  bgx redteam list|run|trend
+  bgx lab up|down|status|sqli|cmdi|xss|brute
+  bgx sable start|stop|status|test
+
+Exit codes: 0 healthy, 1 unhealthy (doctor/status/report aggregate).
+"""
+from __future__ import annotations
+
+import json
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+ATTRIBUTION = "Created by Parth Patel, founder of BenchBrex.com (BeGuardit / BenchBrex)."
+VOLUME = Path("/Volumes/Parth Patel/BeGuardit Hacking Tools")
+SABLE = Path.home() / "sable-01"
+REDTEAM = Path.home() / "bg-redteam"
+LAB = Path.home() / "bg-lab"
+RECON_API = Path.home() / ".hermes/plugins/bg-recon/dashboard/plugin_api.py"
+PYTHON = sys.executable
+
+
+def sh(args: list[str], timeout: int = 120) -> tuple[int, str]:
+    try:
+        r = subprocess.run(args, capture_output=True, text=True, timeout=timeout)
+        return r.returncode, (r.stdout.strip() or r.stderr.strip())
+    except subprocess.TimeoutExpired:
+        return 1, "timeout (subsystem unresponsive — treated as unhealthy)"
+    except FileNotFoundError as exc:
+        return 1, f"missing dependency: {exc}"
+
+
+def section(title: str) -> None:
+    print(f"\n== {title} " + "=" * max(0, 60 - len(title)))
+
+
+def mount_ok() -> bool:
+    if not (VOLUME.exists() and (VOLUME / "sable-01").exists()):
+        return False
+    try:  # readability probe: a stale mount point can exist but not respond
+        (VOLUME / "sable-01" / "PROGRAM.md").stat()
+        return True
+    except OSError:
+        return False
+
+
+# ---------------------------------------------------------------- status
+def cmd_status() -> int:
+    print(ATTRIBUTION)
+    print(f"volume mounted: {mount_ok()}")
+    unhealthy = not mount_ok()
+
+    section("Sable-01 serving stack")
+    code, out = sh([str(SABLE / "serve.sh"), "status"], timeout=60)
+    print(out or "(no output)")
+    stack_up = '"guard": "up"' in out and "up on" in out
+    unhealthy |= not stack_up
+
+    section("BG Recon")
+    code, out = sh([PYTHON, str(RECON_API), "baseline-diff"], timeout=90)
+    if code == 0:
+        try:
+            d = json.loads(out)
+            print("posture diff:", d["verdict"], f"({d['unchanged']} unchanged)")
+        except json.JSONDecodeError:
+            print("posture diff: parse error", out[:100])
+    else:
+        print("recon diff FAILED:", out[:120])
+        unhealthy = True
+
+    section("BG RedTeam")
+    cases = sorted(REDTEAM.glob("cases/*.json"))
+    total = sum(len(json.loads(c.read_text()).get("cases", [])) for c in cases)
+    reports = sorted((REDTEAM / "reports").glob("*/report.json"))
+    latest = reports[-1].parent.name if reports else "none"
+    print(f"case files: {len(cases)}, cases: {total}, latest report: {latest}")
+
+    section("BG Lab")
+    code, out = sh([PYTHON, str(LAB / "lab.py"), "status"], timeout=60)
+    print(out[:300] or "(lab down)")
+    lab_up = "up" in out.lower() and "dvwa" in out.lower()
+
+    section("verdict")
+    print("ALL SYSTEMS GO" if not unhealthy else "ATTENTION: see sections above")
+    return 0 if not unhealthy else 1
+
+
+# ---------------------------------------------------------------- doctor
+def cmd_doctor() -> int:
+    print(ATTRIBUTION)
+    checks: list[tuple[str, bool, str]] = []
+
+    def check(name: str, ok: bool, detail: str = "") -> None:
+        checks.append((name, ok, detail))
+        print(f"[{'OK' if ok else 'FAIL'}] {name}" + (f" - {detail}" if detail else ""))
+
+    check("external volume mounted", mount_ok())
+    for name, path in [
+        ("sable-01 tree", SABLE / "PROGRAM.md"), ("serving stack", SABLE / "serve.sh"),
+        ("production adapter", SABLE / "adapters/r16-run4/adapters.safetensors"),
+        ("base model", SABLE / "base/config.json"),
+        ("frozen eval", SABLE / "eval/holdout.jsonl"),
+        ("tool gate", SABLE / "eval/tool_gate.jsonl"),
+        ("guard tests", SABLE / "tests/test_guard.py"),
+        ("runbook", SABLE / "RUNBOOK.md"),
+        ("redteam harness", REDTEAM / "harness.py"), ("lab manager", LAB / "lab.py"),
+        ("recon plugin", RECON_API), ("bridge plugin", Path.home() / ".hermes/plugins/sable-bridge/plugin.yaml"),
+    ]:
+        check(name, path.exists(), str(path))
+    venv_python = str(SABLE / "venv/bin/python3")  # suite imports guard -> mlx_lm
+    code, out = sh([venv_python, str(SABLE / "tests/test_guard.py")], timeout=300)
+    ran = out.rsplit("Ran ", 1)[-1].split(" ")[0] if "OK" in out else "0"
+    check("guard unit suite", "OK" in out and code == 0, f"{ran} tests")
+    code, out = sh(["hermes", "plugins", "doctor", str(Path.home() / ".hermes/plugins/sable-bridge"), "--ci"], timeout=120)
+    check("bridge registration", code == 0 and "OK" in out, out.splitlines()[0][:70] if out else "")
+    n_fail = sum(1 for _, ok, _ in checks if not ok)
+    print(f"\ndoctor: {len(checks) - n_fail}/{len(checks)} checks passed")
+    return 0 if n_fail == 0 else 1
+
+
+# ---------------------------------------------------------------- report
+def cmd_report(out_path: str | None = None) -> int:
+    data = {"generated_at": time.strftime("%Y-%m-%d %H:%M:%S"), "attribution": ATTRIBUTION}
+    _, out = sh([str(SABLE / "serve.sh"), "status"], timeout=60)
+    data["sable_stack"] = out
+    _, out = sh([PYTHON, str(RECON_API), "baseline-diff"], timeout=90)
+    try:
+        data["recon_diff"] = json.loads(out)
+    except json.JSONDecodeError:
+        data["recon_diff"] = out[:200]
+    cases = sorted(REDTEAM.glob("cases/*.json"))
+    data["redteam"] = {"case_files": len(cases),
+                       "cases": sum(len(json.loads(c.read_text()).get("cases", [])) for c in cases),
+                       "reports": len(list((REDTEAM / "reports").glob("*/report.json")))}
+    _, out = sh([PYTHON, str(LAB / "lab.py"), "status"], timeout=60)
+    data["lab"] = out[:200]
+    text = json.dumps(data, indent=1, ensure_ascii=False)
+    dest = Path(out_path) if out_path else VOLUME / "status_report.json"
+    dest.write_text(text + "\n")
+    print(f"report -> {dest}")
+    print(text[:400])
+    return 0
+
+
+# ---------------------------------------------------------------- dispatch
+def main() -> int:
+    argv = sys.argv[1:]
+    if not argv or argv[0] in ("-h", "--help", "help"):
+        print(__doc__)
+        return 0
+    cmd, rest = argv[0], argv[1:]
+    if cmd == "status":
+        return cmd_status()
+    if cmd == "doctor":
+        return cmd_doctor()
+    if cmd == "report":
+        return cmd_report(rest[0] if rest else None)
+    if cmd == "recon" and rest:
+        action = rest[0]
+        args = [PYTHON, str(RECON_API)]
+        if action == "scan":
+            args = [PYTHON, str(RECON_API), "scan", "--target", rest[1]] + (["--ports", rest[2]] if len(rest) > 2 else [])
+        else:
+            args += [{"posture": "posture", "baseline-save": "baseline-save",
+                      "baseline-diff": "baseline-diff", "report": "report"}.get(action)]
+            if args[-1] is None:
+                print(f"unknown recon action: {action}")
+                return 2
+        code, out = sh(args, timeout=300)
+        print(out)
+        return code
+    if cmd == "redteam" and rest:
+        if rest[0] == "list":
+            for c in sorted(REDTEAM.glob("cases/*.json")):
+                for case in json.loads(c.read_text()).get("cases", []):
+                    print(f"{case.get('id'):10s} {case.get('severity', '?'):7s} {case.get('name', '')}")
+            return 0
+        if rest[0] == "trend" and len(rest) == 3:
+            code, out = sh([PYTHON, str(REDTEAM / "trend.py"), rest[1], rest[2]], timeout=60)
+            print(out)
+            return code
+        if rest[0] == "run":
+            code, out = sh([PYTHON, str(REDTEAM / "harness.py")], timeout=3600)
+            print(out[-2000:])
+            return code
+    if cmd == "lab" and rest:
+        code, out = sh([PYTHON, str(LAB / "lab.py") + (" " + " ".join(rest))].split() if False else [PYTHON, str(LAB / "lab.py"), *rest], timeout=900)
+        print(out[-1500:])
+        return code
+    if cmd == "sable" and rest:
+        code, out = sh([str(SABLE / "serve.sh"), rest[0]], timeout=900)
+        print(out[-1500:])
+        return code
+    print(f"unknown command: {' '.join(argv)} (see bgx --help)")
+    return 2
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

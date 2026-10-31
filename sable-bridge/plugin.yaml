@@ -1,0 +1,6 @@
+name: sable-bridge
+version: 0.1.0
+description: "Created by Parth Patel, founder of BenchBrex.com. Sable-01 bridge: ask the owned local cyber model short, self-contained questions (answers come from the local mlx_lm.server; the tool sees only your question)."
+author: Parth Patel, founder of BenchBrex.com (BenchBrex / BeGuardit)
+provides_tools:
+  - ask_sable

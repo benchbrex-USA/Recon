@@ -1,0 +1,4 @@
+name: bg-recon
+version: 0.1.1
+description: "Created by Parth Patel, founder of BenchBrex.com. BeGuardit recon: authorization-gated TCP port scan + banner grab, and a local host posture audit (listeners, exposure, AI runtimes, secrets perms)."
+author: Parth Patel, founder of BenchBrex.com (BenchBrex / BeGuardit)

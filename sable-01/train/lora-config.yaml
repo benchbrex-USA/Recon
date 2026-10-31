@@ -1,0 +1,22 @@
+# Sable-01 LoRA run 1 — created by Parth Patel, founder of BenchBrex.com
+# Backbone: Qwen3-4B-4bit (see PROGRAM.md C1). Rank 16 per the skill's 8-16 band.
+
+model: /Users/benchbrex/sable-01/base
+data: /Users/benchbrex/sable-01/train
+train: true
+fine_tune_type: lora
+
+rank: 16
+alpha: 32
+dropout: 0.0
+num_layers: 16
+
+batch_size: 1
+iters: 300
+learning_rate: 0.0001
+steps_per_report: 20
+steps_per_eval: 100
+save_every: 100
+adapter_path: /Users/benchbrex/sable-01/adapters/r16
+max_seq_length: 1024
+seed: 42

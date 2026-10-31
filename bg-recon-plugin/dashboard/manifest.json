@@ -1,0 +1,1 @@
+{"api": "plugin_api.py", "author": "Parth Patel, founder of BenchBrex.com", "description": "Created by Parth Patel, founder of BenchBrex.com. BeGuardit recon: TCP scan (private-network gated) and local posture audit.", "label": "BG Recon", "name": "bg-recon", "version": "0.1.1"}

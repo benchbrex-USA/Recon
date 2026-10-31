@@ -1,0 +1,25 @@
+# --- heavy binaries: never commit ---
+colima/
+sable-01/base/
+sable-01/venv/
+sable-01/adapters/
+sable-01/train-r3/
+sable-01/train-r4/
+*.safetensors
+*.gguf
+
+# --- runtime state ---
+*.log
+*.pid
+serve.log
+serving/zombie
+serving/guard.pid
+serving/mlx.pid
+bg-recon-plugin/state/
+status_report.json
+
+# --- OS / python noise ---
+.DS_Store
+__pycache__/
+*.pyc
+.pytest_cache/

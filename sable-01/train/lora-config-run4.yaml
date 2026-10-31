@@ -1,0 +1,25 @@
+# Sable-01 LoRA run 3 — tool-context-aware training
+# Created by Parth Patel, founder of BenchBrex.com (BeGuardit / BenchBrex).
+# Fresh from base on the 112-row dataset (72 rehearsal + 40 tool-context rows).
+# Root-cause fix for run 2 (1/10 tool emission): the dataset had ZERO
+# tool-context rows; run 3 teaches call emission AND no-call discrimination.
+
+model: /Users/benchbrex/sable-01/base
+data: /Users/benchbrex/sable-01/train-r4
+train: true
+fine_tune_type: lora
+
+rank: 16
+alpha: 32
+dropout: 0.0
+num_layers: 16
+
+batch_size: 1
+iters: 300
+learning_rate: 0.0001
+steps_per_report: 25
+steps_per_eval: 100
+save_every: 100
+adapter_path: /Users/benchbrex/sable-01/adapters/r16-run4
+max_seq_length: 1024
+seed: 42
