@@ -70,6 +70,9 @@ Claims in this repository are backed by executed tests, kept current in
 Model weights, adapter binaries, virtualenvs and the container VM disk are
 excluded by `.gitignore` — this repo carries code, specs, eval definitions,
 runbooks and documentation only. A secrets scan runs before every push.
+Runtime artifacts live on the owner's external volume; a clean clone needs that
+volume mounted at its canonical path for `bgx doctor` and the serving stack to
+pass (the adapter and model directories are intentionally untracked).
 
 ## License
 
