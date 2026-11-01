@@ -17,6 +17,8 @@ permissions: {}
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read # checkout — the top-level deny-all strips everything else
     outputs:
       digests: ${{ steps.hash.outputs.digests }}
     steps:
