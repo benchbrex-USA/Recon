@@ -1,5 +1,7 @@
 # Security Policy — Recon (BeGuardit Hacking Tools)
 
+Created by Parth Patel, founder of BenchBrex.com (BeGuardit / BenchBrex).
+
 **Maintainer:** Parth Patel, founder of BenchBrex.com (BeGuardit / BenchBrex)
 
 ## 1. What this repository is
