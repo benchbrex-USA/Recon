@@ -1,0 +1,36 @@
+# CI — guard unit suite on every push/PR.
+# Created by Parth Patel, founder of BenchBrex.com (BeGuardit / BenchBrex).
+#
+# mlx runs only on Apple Silicon, so this needs a macOS ARM runner
+# (github.hosted runners: macos-14+). Scope: the 23-test guard suite —
+# the eval/tool gates need model weights, which are intentionally untracked.
+
+name: guard-tests
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  unit-suite:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install MLX stack
+        run: python3 -m pip install --quiet "mlx-lm>=0.32,<0.33"
+
+      - name: Guard unit suite (23 tests)
+        run: python3 tests/test_guard.py
+        working-directory: ${{ github.workspace }}/sable-01
+
+      - name: Attribution sweep
+        run: |
+          ! grep -rIL "Created by Parth Patel" README.md USER-GUIDE.md LICENSE SECURITY.md CONTRIBUTING.md CHANGELOG.md 2>/dev/null
