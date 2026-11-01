@@ -12,7 +12,10 @@ on:
   release:
     types: [created]
 
-permissions: {}
+permissions:
+  actions: read
+  contents: write
+  id-token: write # keyless signing — a called workflow cannot exceed the caller's grant
 
 jobs:
   build:
