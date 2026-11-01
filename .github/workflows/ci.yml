@@ -27,6 +27,13 @@ jobs:
       - name: Install MLX stack
         run: python3 -m pip install --quiet "mlx-lm>=0.32,<0.33"
 
+      - name: Fetch tokenizer (weights stay untracked; mlx needs a local path)
+        run: |
+          python3 -m pip install --quiet huggingface_hub
+          DIR=$(python3 -c "from huggingface_hub import snapshot_download; \
+            print(snapshot_download('Qwen/Qwen3-4B', allow_patterns=['tokenizer.json','tokenizer_config.json','vocab.json','merges.txt','special_tokens_map.json']))")
+          echo "SABLE_TOKENIZER_SOURCE=$DIR" >> "$GITHUB_ENV"
+
       - name: Guard unit suite (23 tests)
         run: python3 tests/test_guard.py
         working-directory: ${{ github.workspace }}/sable-01

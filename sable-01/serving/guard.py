@@ -72,19 +72,32 @@ last_backend_ok: float | None = None
 shutting_down = False
 
 # --- tokenizer (backend-exact: mlx_lm.tokenizer_utils.load) -------------------
+# Source is env-configurable (SABLE_TOKENIZER_SOURCE): production uses the
+# local base/ directory; CI uses the public HF tokenizer id (no weights).
+# Loading is LAZY — import must not require the model artifacts (Goldfish-D
+# CI finding: unit tests stub count_tokens but still import this module).
 
-try:
-    from mlx_lm.tokenizer_utils import load as _mlx_load_tokenizer
+_TOKENIZER = None
 
-    TOKENIZER = _mlx_load_tokenizer((SABLE_DIR / "base").resolve())
-except Exception as exc:  # fail fast with an actionable error
-    print(f"[guard] FATAL: cannot load tokenizer from {SABLE_DIR/'base'}: {exc}\n"
-          f"[guard] is the external volume mounted and base/ complete?", file=sys.stderr)
-    sys.exit(1)
+
+def _get_tokenizer():
+    global _TOKENIZER
+    if _TOKENIZER is None:
+        from mlx_lm.tokenizer_utils import load as _mlx_load_tokenizer
+
+        source = os.environ.get("SABLE_TOKENIZER_SOURCE", str((SABLE_DIR / "base").resolve()))
+        try:
+            _TOKENIZER = _mlx_load_tokenizer(Path(source))
+        except Exception as exc:  # fail fast with an actionable error
+            print(f"[guard] FATAL: cannot load tokenizer from {source}: {exc}\n"
+                  f"[guard] is the external volume mounted and base/ complete?",
+                  file=sys.stderr)
+            sys.exit(1)
+    return _TOKENIZER
 
 
 def count_tokens(messages: list[dict]) -> int:
-    ids = TOKENIZER.apply_chat_template(messages, add_generation_prompt=True)
+    ids = _get_tokenizer().apply_chat_template(messages, add_generation_prompt=True)
     return len(ids)
 
 
