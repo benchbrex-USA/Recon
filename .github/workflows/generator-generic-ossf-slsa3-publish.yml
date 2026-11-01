@@ -41,7 +41,7 @@ jobs:
         run: |
           set -euo pipefail
           files=$(ls recon-*.tar.gz)
-          echo "hashes=$(sha256sum $files | base64 -w0)" >> "${GITHUB_OUTPUT}"
+          echo "digests=$(sha256sum $files | base64 -w0)" >> "${GITHUB_OUTPUT}"
 
   provenance:
     needs: [build]
