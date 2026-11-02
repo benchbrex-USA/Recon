@@ -3,6 +3,66 @@
 All notable changes to the BeGuardit Hacking Tools toolchain.
 Created by Parth Patel, founder of BenchBrex.com (BeGuardit / BenchBrex).
 
+## [2.4] — 2026-11-02
+
+### Added
+- `bgx recon tailscale` — read-only Tailscale attack-surface check of this
+  machine: version, backend state, self DNS/Tailscale IPs, peer count,
+  Serve/Funnel state (JSON-first with text fallback; raw command output kept
+  in the report), Tailscale SSH, advertised exit-node routes. Funnel active =
+  critical (public ts.net URL reaches the machine); Serve active = medium;
+  SSH/exit-node = low; not connected = info. Never mutates config — Serve,
+  Funnel, ACL and route changes stay owner-approval actions.
+- Foundational research recorded: RFC 8996 (TLS 1.0/1.1 deprecated), RFC 6797
+  §8.1 (HSTS noted only over secure transport), MDN Set-Cookie (Secure /
+  HttpOnly semantics).
+
+### Tests
+- `bg-recon-plugin/tests/test_tailscale.py` (12): serve JSON shapes including
+  the 1.102.x config-map contract (`{}` = off; non-map values = unknown),
+  funnel text classification, severity rules. Suite total 19/19 across three
+  files.
+
+### Verified live (this machine)
+- Tailscale 1.102.4, backend Running, self `benchbrex.taila8b570.ts.net`
+  (100.107.166.54), 1 peer, Serve off, Funnel off, SSH off, no exit node.
+  Exit 0 / NO HIGH FINDINGS.
+
+## [2.3] — 2026-11-02
+
+### Added
+- `bgx recon web <host> --allow-external [--path /]` — authorized header
+  posture: HTTP redirect, HSTS (RFC 6797 §8.1), `Set-Cookie` Secure/HttpOnly
+  (MDN), `X-Powered-By`. GET-only, no redirects followed, cookie values
+  redacted before they exist in any report. Probes run concurrently.
+- `bgx recon tls <host> --allow-external` — leaf certificate (subject, issuer,
+  notAfter, days remaining, SAN), chain verification, pinned-version
+  handshakes for TLS 1.0/1.1/1.2/1.3 (RFC 8996). Client-unsupported vs
+  server-rejected are labeled separately; cipher-level failure is reported
+  with its raw error instead of being overclaimed.
+- `bgx recon map <host> --allow-external` — bounded sequential site inventory
+  (≤80 GETs): sitemap + same-host links + a fixed mistake-path list
+  (`.env`, `.git/`, backups, phpinfo, `/cpanel`, ...). Shared-host friendly:
+  sequential because a parallel burst tripped a live host's connection limit.
+- `bgx recon web-history <host>` — per-host posture history with a diff of
+  new vs resolved findings between the last two runs. `web` auto-saves.
+- `bgx recon scan --allow-external` — public targets now reachable by explicit
+  flag; default refusal unchanged.
+- `bgx status` now treats `NEW LAN-EXPOSED` as unhealthy (was printing
+  ALL SYSTEMS GO over a live exposure).
+
+### Tests
+- `bg-recon-plugin/tests/test_web_posture.py` (4) and `test_v23.py` (7):
+  cookie flag parsing/redaction, day-remaining math, protocol-error
+  classification, same-host link extraction, history save/diff. 11/11.
+
+### Verified live on shreeramaerospace.com (owner-authorized)
+- web: `http-no-redirect`, `hsts-absent` (exit 1); cookie path adds
+  `cookie-cleartext`, `cookie-not-httponly`, `version-disclosure`.
+- tls: GoDaddy DV, 160 days left, chain OK, TLS 1.2 accepted, TLS 1.3
+  server-rejected, 1.0/1.1 not accepted.
+- map: 59 requests, `/cpanel` served 200 on port 80 flagged high.
+
 ## [2.1] — 2026-11-01
 
 ### Added

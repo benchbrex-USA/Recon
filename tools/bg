@@ -7,7 +7,7 @@ One entry point for the four systems on the external volume:
   bgx status                     one-screen health of everything
   bgx doctor                     deep verification (files, ports, imports, adapter)
   bgx report [path]              JSON status dump (agent/gateway consumable)
-  bgx recon posture|scan|baseline-save|baseline-diff|report
+  bgx recon posture|scan|web|tls|map|web-history|tailscale|baseline-save|baseline-diff|report
   bgx redteam list|run|trend
   bgx lab up|down|status|sqli|cmdi|xss|brute
   bgx sable start|stop|status|test
@@ -73,6 +73,8 @@ def cmd_status() -> int:
         try:
             d = json.loads(out)
             print("posture diff:", d["verdict"], f"({d['unchanged']} unchanged)")
+            if d.get("new_lan_exposed"):
+                unhealthy = True
         except json.JSONDecodeError:
             print("posture diff: parse error", out[:100])
     else:
@@ -170,10 +172,39 @@ def main() -> int:
         action = rest[0]
         args = [PYTHON, str(RECON_API)]
         if action == "scan":
-            args = [PYTHON, str(RECON_API), "scan", "--target", rest[1]] + (["--ports", rest[2]] if len(rest) > 2 else [])
+            if len(rest) < 2:
+                print("usage: bgx recon scan <target> [ports] [--allow-external]")
+                return 2
+            args = [PYTHON, str(RECON_API), "scan", "--target", rest[1]]
+            if len(rest) > 2 and not rest[2].startswith("--"):
+                args += ["--ports", rest[2]]
+            if "--allow-external" in rest:
+                args.append("--allow-external")
+        elif action == "web":
+            if len(rest) < 2:
+                print("usage: bgx recon web <target> [--path /] [--allow-external]")
+                return 2
+            args = [PYTHON, str(RECON_API), "web", "--target", rest[1]]
+            if "--path" in rest:
+                args += ["--path", rest[rest.index("--path") + 1]]
+            if "--allow-external" in rest:
+                args.append("--allow-external")
+        elif action in ("tls", "map"):
+            if len(rest) < 2:
+                print(f"usage: bgx recon {action} <target> [--allow-external]")
+                return 2
+            args = [PYTHON, str(RECON_API), action, "--target", rest[1]]
+            if "--allow-external" in rest:
+                args.append("--allow-external")
+        elif action == "web-history":
+            if len(rest) < 2:
+                print("usage: bgx recon web-history <target>")
+                return 2
+            args = [PYTHON, str(RECON_API), "web-history", "--target", rest[1]]
         else:
             args += [{"posture": "posture", "baseline-save": "baseline-save",
-                      "baseline-diff": "baseline-diff", "report": "report"}.get(action)]
+                      "baseline-diff": "baseline-diff", "report": "report",
+                      "tailscale": "tailscale"}.get(action)]
             if args[-1] is None:
                 print(f"unknown recon action: {action}")
                 return 2
@@ -195,7 +226,7 @@ def main() -> int:
             print(out[-2000:])
             return code
     if cmd == "lab" and rest:
-        code, out = sh([PYTHON, str(LAB / "lab.py") + (" " + " ".join(rest))].split() if False else [PYTHON, str(LAB / "lab.py"), *rest], timeout=900)
+        code, out = sh([PYTHON, str(LAB / "lab.py"), *rest], timeout=900)
         print(out[-1500:])
         return code
     if cmd == "sable" and rest:
