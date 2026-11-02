@@ -39,11 +39,14 @@ gate 1/10). This spec defines the v2 upgrade.
 
 - `bgx` output: human-readable sections + verdict line; `bgx report` writes
   JSON to `<volume>/status_report.json`.
-- Recon CLI: `python3 plugin_api.py {posture|baseline-save|baseline-diff|report}`.
+- Recon CLI (as-built v2.5): `python3 plugin_api.py
+  {posture|baseline-save|baseline-diff|report|scan|web|tls|map|web-history|tailscale|assess}`
+  — scan/web/tls/map/assess refuse public targets without `--allow-external`.
 - Trend: exit 0 no regressions, exit 1 regressions, exit 2 usage.
 - Guard `/metrics`: JSON, keys uptime_s/requests_total/by_status/latency_s.
-- Tool emission contract: `{"tool": "<name>", "arguments": {...}}` — parseable
-  by brace-matching (nested objects supported).
+- Tool emission contract: `{"tool": "<name>", "arguments": {...}}` — parsed with
+  `json.JSONDecoder.raw_decode` in `eval/run_tool_gate.py` (as-built: the earlier
+  brace-matching regex failed on nested `arguments` and was replaced).
 
 ## 4. Failure handling
 
@@ -52,7 +55,8 @@ gate 1/10). This spec defines the v2 upgrade.
 - Recon diff: no baseline → explicit error message, not a crash.
 - Guard metrics: recording failure cannot break the request path (same lock,
   fixed-size latency deque).
-- Lab modules: target-down → fail with readable error (pre-flight in run()).
+- Lab modules: target-down → fail with readable error (pre-flight in `__main__`
+  before `run()` in the v2 modules — as-built; keeps `run()` importable).
 
 ## 5. Acceptance criteria
 
@@ -77,9 +81,10 @@ gate 1/10). This spec defines the v2 upgrade.
 
 ## 6. Rollout / rollback
 
-Single-user host; rollout is immediate. Rollback: `git`-less — serve.sh
-ADAPTER reverts to `adapters/r16` (one line); bgx/recon/redteam/lab additions
-are additive and can be ignored without removing v1 behavior.
+Single-user host; rollout is immediate. Rollback (as-built): the toolchain is the
+private git repo `benchbrex-USA/Recon` — `git revert` / checkout is the rollback
+path; serve.sh ADAPTER still reverts to `adapters/r16` (one line); bgx/recon/
+redteam/lab additions are additive and can be ignored without removing v1 behavior.
 
 ## 7. Known residuals (declared)
 

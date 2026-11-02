@@ -1,9 +1,10 @@
-# CI — guard unit suite on every push/PR.
+# CI — guard unit suite + recon unit suites on every push/PR.
 # Created by Parth Patel, founder of BenchBrex.com (BeGuardit / BenchBrex).
 #
-# mlx runs only on Apple Silicon, so this needs a macOS ARM runner
-# (github.hosted runners: macos-14+). Scope: the 23-test guard suite —
+# mlx runs only on Apple Silicon, so the guard job needs a macOS ARM runner
+# (github.hosted runners: macos-14+). Scope: the 26-test guard suite —
 # the eval/tool gates need model weights, which are intentionally untracked.
+# The bg-recon-plugin suites are stdlib-only and run on ubuntu.
 
 name: guard-tests
 on:
@@ -34,7 +35,7 @@ jobs:
             print(snapshot_download('Qwen/Qwen3-4B', allow_patterns=['tokenizer.json','tokenizer_config.json','vocab.json','merges.txt','special_tokens_map.json']))")
           echo "SABLE_TOKENIZER_SOURCE=$DIR" >> "$GITHUB_ENV"
 
-      - name: Guard unit suite (23 tests)
+      - name: Guard unit suite (26 tests)
         run: python3 tests/test_guard.py
         working-directory: ${{ github.workspace }}/sable-01
 
@@ -48,3 +49,21 @@ jobs:
               || { echo "MISSING attribution: $f"; exit 1; }
           done
           echo "attribution: all 5 files carry the banner"
+
+  recon-suite:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Recon unit suites (bg-recon-plugin tests, stdlib-only)
+        run: |
+          shopt -s nullglob
+          for t in bg-recon-plugin/tests/test_*.py; do
+            echo "== $t"
+            python3 "$t" || exit 1
+          done
+          echo "all recon suites passed"

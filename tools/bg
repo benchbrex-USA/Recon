@@ -7,6 +7,7 @@ One entry point for the four systems on the external volume:
   bgx status                     one-screen health of everything
   bgx doctor                     deep verification (files, ports, imports, adapter)
   bgx report [path]              JSON status dump (agent/gateway consumable)
+  bgx assess <host> [--deep] [--allow-external]   one-command engagement (web+tls+map, record+HTML)
   bgx recon posture|scan|web|tls|map|web-history|tailscale|baseline-save|baseline-diff|report
   bgx redteam list|run|trend
   bgx lab up|down|status|sqli|cmdi|xss|brute
@@ -162,6 +163,16 @@ def main() -> int:
         print(__doc__)
         return 0
     cmd, rest = argv[0], argv[1:]
+    if cmd == "assess" and rest:
+        target = rest[0]
+        args = [PYTHON, str(RECON_API), "assess", "--target", target]
+        if "--deep" in rest:
+            args.append("--deep")
+        if "--allow-external" in rest:
+            args.append("--allow-external")
+        code, out = sh(args, timeout=900)
+        print(out)
+        return code
     if cmd == "status":
         return cmd_status()
     if cmd == "doctor":
@@ -189,11 +200,20 @@ def main() -> int:
                 args += ["--path", rest[rest.index("--path") + 1]]
             if "--allow-external" in rest:
                 args.append("--allow-external")
-        elif action in ("tls", "map"):
+        elif action == "tls":
             if len(rest) < 2:
-                print(f"usage: bgx recon {action} <target> [--allow-external]")
+                print("usage: bgx recon tls <target> [--deep] [--allow-external]")
                 return 2
-            args = [PYTHON, str(RECON_API), action, "--target", rest[1]]
+            args = [PYTHON, str(RECON_API), "tls", "--target", rest[1]]
+            if "--deep" in rest:
+                args.append("--deep")
+            if "--allow-external" in rest:
+                args.append("--allow-external")
+        elif action == "map":
+            if len(rest) < 2:
+                print("usage: bgx recon map <target> [--allow-external]")
+                return 2
+            args = [PYTHON, str(RECON_API), "map", "--target", rest[1]]
             if "--allow-external" in rest:
                 args.append("--allow-external")
         elif action == "web-history":

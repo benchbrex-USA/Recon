@@ -10,7 +10,8 @@ verified in-session 2026-10-29/30 unless tagged UNVERIFIED.
 ## Problem and outcome
 
 - **Who is affected:** the owner (Parth) — Sable-01 (Qwen3-4B-4bit + LoRA, gates 0–10 complete)
-  serves trained BenchBrex facts on 127.0.0.1:8001 but cannot participate in Hermes agent turns.
+  serves trained BenchBrex facts on 127.0.0.1:8001 but could not participate in Hermes
+  agent turns (as-built: it now does — `sable` profile + `ask_sable` bridge tool).
 - **Concrete pain:** the full Hermes agent system prompt is **28,308 tokens**; its KV cache
   spikes ≈4.1 GB on top of 2.7 GB weights and kills the mlx_lm.server generation thread
   (verified: serve.log traceback + 20.5-minute one-shot failure). Short prompts (293–5,518 tok)
@@ -26,7 +27,8 @@ verified in-session 2026-10-29/30 unless tagged UNVERIFIED.
 - Serving is **localhost-only** by design; no external binding.
 - Sable-01's refusal policy is *trained* (soft), not enforced — any tool access must be gated
   at the tool layer (the `check_target` authorization-gate pattern), never by trusting the model.
-- 4B tool-calling reliability: **UNVERIFIED** — no probe has been run.
+- 4B tool-calling reliability: **VERIFIED 2026-11-01** — frozen tool gate 9/10 on
+  `adapters/r16-run4` (residual T-10: unauthorized-target emission).
 - mlx_lm.server quirks (verified): `default_model` is the only request id that maps to the
   adapter; after a generation-thread death the server becomes a zombie until restarted.
 - External volume dependency: all artifacts live under `/Volumes/Parth Patel/BeGuardit Hacking
@@ -50,7 +52,8 @@ verified in-session 2026-10-29/30 unless tagged UNVERIFIED.
 - **External volume unmounted:** model paths and serve.sh dangle; server must fail loudly.
 - **Concurrency:** mlx server behavior under parallel requests is UNVERIFIED (likely serial).
 - **Memory contention:** serving (~3 GB) alongside the desktop stack is verified OK; adding a
-  second resident model or colima simultaneously is not.
+  second resident model or colima simultaneously is not. (As-built footprint:
+  2.36 GB idle / 2.48 GB under generation.)
 - **Data:** training rows are owned material (PROVENANCE.md); privacy exposure is minimal.
 
 ## Decisions and unknowns

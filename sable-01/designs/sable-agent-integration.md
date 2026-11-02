@@ -121,7 +121,9 @@ Components:
    - `GET /v1/models` → forwarded verbatim. `GET /health` → guard-local:
      `{"guard": "up", "zombie": <bool>, "in_flight": n, "last_backend_ok_age_s": n}`
      (guard up even if backend dead — F-013). `GET /ready` → 200 only if the last
-     forward succeeded within 120 s; else 503.
+     forward succeeded within 120 s; else 503. `GET /metrics` → guard-local JSON
+      counters (uptime_s/requests_total/by_status/latency_s). Any other GET path is
+      refused 404 (T26, as-built: only /v1/, /health, /ready, /metrics are served).
    - Validation hardening (drift D-1, as-built): non-string `question` (tool) or
      `content` (messages) is coerced to its JSON text before tokenization — models
      occasionally emit nested objects, and the tokenizer crashes on them.
@@ -191,7 +193,8 @@ Invariants:
     413 (over-envelope), 429 (rate limit), 502 (backend unreachable:
     `{"error": "mlx server not running — run serve.sh start"}`), 503 (zombie or busy),
     504 (generation timeout — drift D-2).
-  - `GET /v1/models` → forwarded; `GET /health`, `GET /ready` → guard-local (§4).
+  - `GET /v1/models` → forwarded; `GET /health`, `GET /ready`, `GET /metrics` →
+    guard-local (§4); any other GET refused (T26).
   - All error bodies: single-field JSON `{"error": "..."}` naming the fix.
 - Tool contract (`ask_sable`): parameters `question` (string, required), `max_tokens`
   (integer 64–1024, default 512), `temperature` (number 0–2, default 0.3). Returns the
@@ -243,9 +246,11 @@ Canonical root: `SABLE_DIR` = the directory containing this spec's parent
 (`<external>/sable-01/`); every runtime path (guard.py, marker, pid, log) resolves from
 `SABLE_DIR` absolutely — no CWD dependence (GC divergence fix). Canonical attribution
 line (all new files): `Created by Parth Patel, founder of BenchBrex.com (BeGuardit / BenchBrex).`
-Guard tokenizer loader: `mlx_lm.tokenizer_utils.load_tokenizer(<SABLE_DIR>/base)` — the
-same loader family the backend uses; parity is verified by AC-003 text equivalence
-(VERIFY at implementation).
+Guard tokenizer loader (as-built 2026-11-02): `from mlx_lm.tokenizer_utils import load`,
+then `load(<SABLE_DIR>/base)` — mlx-lm 0.32.2 exposes `load`, not `load_tokenizer`.
+Loading is lazy (first tokenize, not import) and honors `SABLE_TOKENIZER_SOURCE` (CI
+fetches a public tokenizer; weights stay untracked). Parity with the backend is verified
+by AC-003 text equivalence.
 
 | Path / component | Concrete change | Dependencies | Verification |
 |---|---|---|---|

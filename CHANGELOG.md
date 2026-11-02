@@ -3,6 +3,40 @@
 All notable changes to the BeGuardit Hacking Tools toolchain.
 Created by Parth Patel, founder of BenchBrex.com (BeGuardit / BenchBrex).
 
+## [2.5] — 2026-11-03
+
+### Added
+- `bgx assess <host> [--deep] [--allow-external]` — one-command engagement:
+  composes web + tls + map (tailscale context when the target is this
+  machine), aggregates findings severity-ordered with sources, and writes the
+  engagement record (Markdown) + client-ready HTML report to `engagements/`
+  automatically. Authorization gate enforced once up front.
+- `bgx recon tls <host> --deep` — vendored testssl.sh 3.2.4 (handshake-only
+  checks, `--fast --quiet`, JSON parsed into finding rows). GPL third-party
+  tool: cloned to `tools/testssl.sh/`, gitignored, credited in
+  THIRD_PARTY_NOTICES.md — not vendored into this proprietary repo.
+- Owned-site watchdog: `~/.hermes/scripts/web_watchdog.sh` + cron
+  `beguardit-web-watchdog` (e80792f9073e, Mondays 10:00 IST, no_agent,
+  deliver bot-chat, silent unless NEW findings appear).
+- CI: new `recon-suite` job runs every `bg-recon-plugin/tests/test_*.py`
+  (stdlib-only, ubuntu) on every push/PR; guard-suite comment corrected
+  23 → 26 tests.
+- Spec drift from the 2026-11-02 EGM drift report closed: tokenizer loader
+  (`load`, lazy, `SABLE_TOKENIZER_SOURCE`), `/metrics` + GET allowlist,
+  recon CLI subcommand list, raw_decode parser (was brace-matching), lab
+  pre-flight placement, git-based rollback, concepts-brief status updates
+  (tool gate verified, as-built footprint).
+
+### Tests
+- `test_assess.py` (7): aggregation order/sources, host slugs, testssl JSON
+  shapes + severity normalization, HTML escaping. Suite total 32/32 across
+  four files; guard suite green locally and in CI.
+
+### Verified live (shreeramaerospace.com, owner-authorized)
+- `bgx assess` (no deep): verdict ATTENTION, 3 high findings (hsts-absent,
+  http-no-redirect, /cpanel mistake-path), engagement md + html written.
+- Watchdog: silence path silent, alert path correct on synthetic diff.
+
 ## [2.4] — 2026-11-02
 
 ### Added

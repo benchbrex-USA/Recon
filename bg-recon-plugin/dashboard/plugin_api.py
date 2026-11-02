@@ -734,7 +734,7 @@ def verify_chain(ip: str, port: int, servername: str, timeout: float = 10.0) -> 
     return None
 
 
-def tls_posture(target: str, allow_external: bool, port: int = 443) -> dict[str, Any]:
+def tls_posture(target: str, allow_external: bool, port: int = 443, deep: bool = False) -> dict[str, Any]:
     """Authorized TLS check of one owned host. Standards: RFC 8996, RFC 6797."""
     auth = authorization(target, allow_external)
     if not auth.get("allowed"):
@@ -769,11 +769,20 @@ def tls_posture(target: str, allow_external: bool, port: int = 443) -> dict[str,
                 "severity": "high" if name == "TLSv1.0" else "medium",
                 "detail": f"{name} accepted. RFC 8996 formally deprecates TLS 1.0 and 1.1.",
             })
+    if deep:
+        deep_report = tls_deep(target)
+        findings.extend(deep_report.get("findings", []))
+        deep_summary = {"counts": deep_report.get("counts"), "available": deep_report.get("available")}
+        if deep_report.get("error"):
+            deep_summary["error"] = deep_report["error"]
+    else:
+        deep_summary = None
     high = [f for f in findings if f["severity"] in ("high", "critical")]
     return {
         "author": "Created by Parth Patel, founder of BenchBrex.com",
         "target": target,
         "port": port,
+        "deep": deep_summary,
         "authorization": auth,
         "certificate": cert,
         "chain": chain,
@@ -793,6 +802,17 @@ MISTAKE_PATHS = [
 ]
 
 
+def is_bot_challenge(headers: dict[str, Any] | None, body: bytes | None) -> bool:
+    """Detect anti-bot interstitials (observed live: cf-edge-cache + JS wait page).
+
+    Challenged responses are NOT evidence about the path — they must never be
+    reported as exposed.
+    """
+    if body and b"One moment, please" in body[:4096]:
+        return True
+    return bool((headers or {}).get("cf-edge-cache"))
+
+
 def _fetch_page(url: str, max_bytes: int = 200_000) -> dict[str, Any]:
     """GET one page. No redirects followed, no cookies, no POST."""
     proc = subprocess.run(
@@ -807,6 +827,7 @@ def _fetch_page(url: str, max_bytes: int = 200_000) -> dict[str, Any]:
     parsed = parse_response_headers(raw[:sep].decode("latin1"))
     parsed["url"] = url
     parsed["body"] = raw[sep + 4:]
+    parsed["challenge"] = is_bot_challenge(parsed.get("headers"), parsed.get("body"))
     return parsed
 
 
@@ -864,12 +885,16 @@ def site_map(target: str, allow_external: bool, max_requests: int = 80) -> dict[
     for path in queue:
         get(path)
     pages, assets, blocked, missing, mistakes = {}, {}, [], [], []
+    challenged: list[str] = []
     home_body = None
     if home and home.get("status") == 200:
         home_body = home["body"]
     for path, row in sorted(results.items()):
         status, ctype = row.get("status"), (row.get("headers") or {}).get("content-type", [""])[0]
         entry = {"status": status, "type": ctype, "bytes": len(row.get("body") or b"")}
+        if row.get("challenge"):
+            challenged.append(path)
+            continue
         same_as_home = bool(home_body) and row.get("body") == home_body and path not in ("/", "/index.html")
         if path in MISTAKE_PATHS:
             if status == 200 and not same_as_home:
@@ -895,6 +920,14 @@ def site_map(target: str, allow_external: bool, max_requests: int = 80) -> dict[
             "severity": "critical" if item["path"] in ("/.env", "/.git/HEAD", "/.git/config") else "high",
             "detail": f"{item['path']} returned 200 ({item['type']}, {item['bytes']} bytes)",
         })
+    if challenged:
+        findings.append({
+            "id": "bot-challenge-observed",
+            "severity": "info",
+            "detail": (f"{len(challenged)} path(s) returned an anti-bot interstitial "
+                       "(cf-edge-cache / 'One moment, please'). Those paths are unverified, "
+                       "not exposed - and the host has bot protection enabled."),
+        })
     if sitemap is None or sitemap.get("status") != 200:
         findings.append({"id": "sitemap-missing", "severity": "low", "detail": "no /sitemap.xml"})
     critical = [f for f in findings if f["severity"] == "critical"]
@@ -906,6 +939,7 @@ def site_map(target: str, allow_external: bool, max_requests: int = 80) -> dict[
         "requests_used": max_requests - budget["left"],
         "pages": pages, "assets": assets,
         "blocked": blocked, "missing": missing, "mistakes": mistakes,
+        "challenged": challenged,
         "findings": findings,
         "high_count": len(high) + len(critical),
         "verdict": "ATTENTION" if (high or critical) else "NO HIGH FINDINGS",
@@ -1127,17 +1161,221 @@ def tailscale_posture() -> dict[str, Any]:
     }
 
 
+# ---------------------------------------------------------------------------
+# v2.5: assessment orchestrator (created by Parth Patel, founder of
+# BenchBrex.com). One command composes the proven checks — web + tls
+# (+ optional deep testssl.sh) + map, tailscale context when the target is
+# this machine — and writes the engagement record + client-ready HTML.
+# ---------------------------------------------------------------------------
+
+TESTSSL_SEVERITIES = ("critical", "high", "medium", "low")
+
+
+def _volume_root() -> Path:
+    return Path(__file__).resolve().parents[2]
+
+
+def _find_testssl() -> Path | None:
+    import os
+    env = os.environ.get("TESTSSL_BIN")
+    if env and Path(env).exists():
+        return Path(env)
+    candidate = _volume_root() / "tools" / "testssl.sh" / "testssl.sh"
+    if candidate.exists():
+        return candidate
+    found = shutil.which("testssl.sh")
+    return Path(found) if found else None
+
+
+def parse_testssl_json(text: str) -> list[dict[str, Any]]:
+    """testssl.sh --jsonfile output → our finding rows. Tolerates both shapes."""
+    try:
+        payload = json.loads(text)
+    except json.JSONDecodeError:
+        return []
+    entries = payload.get("scanResult") if isinstance(payload, dict) else payload
+    if not isinstance(entries, list):
+        return []
+    rows: list[dict[str, Any]] = []
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+        severity = str(entry.get("severity", "")).lower()
+        if severity not in TESTSSL_SEVERITIES:
+            continue
+        rows.append({
+            "id": f"testssl-{entry.get('id', 'finding')}",
+            "severity": severity,
+            "detail": str(entry.get("finding", ""))[:220],
+        })
+    return rows
+
+
+def tls_deep(target: str, timeout: float = 540.0) -> dict[str, Any]:
+    """Vendored testssl.sh against one host (handshake-only checks)."""
+    binary = _find_testssl()
+    if not binary:
+        return {"available": False, "findings": [], "note": (
+            "testssl.sh not found. Install once: git clone --depth 1 --branch 3.2 "
+            "https://github.com/testssl/testssl.sh.git <volume>/tools/testssl.sh "
+            "(or set TESTSSL_BIN). GPL code - kept out of the repo by .gitignore.")}
+    out_file = _volume_root() / "bg-recon-plugin" / "state" / f"testssl-{target}.json"
+    out_file.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        proc = subprocess.run(
+            ["bash", str(binary), "--fast", "--quiet", "--color", "0",
+             "--jsonfile", str(out_file), target],
+            capture_output=True, text=True, timeout=timeout, check=False)
+    except subprocess.TimeoutExpired:
+        return {"available": True, "error": f"testssl exceeded {timeout:.0f}s; run standalone for a full scan"}
+    findings = parse_testssl_json(out_file.read_text()) if out_file.exists() else []
+    counts = {s: sum(1 for f in findings if f["severity"] == s) for s in TESTSSL_SEVERITIES}
+    return {"available": True, "binary": str(binary), "exit_code": proc.returncode,
+            "findings": findings, "counts": counts}
+
+
+def aggregate_findings(checks: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
+    """Merge per-check findings into one severity-ordered list with sources."""
+    order = {"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4}
+    rows: list[dict[str, Any]] = []
+    for source, report in checks.items():
+        for finding in report.get("findings", []):
+            rows.append({"source": source, **finding})
+    rows.sort(key=lambda r: (order.get(str(r.get("severity")), 9), str(r.get("id"))))
+    return rows
+
+
+def _slug(host: str) -> str:
+    return re.sub(r"[^a-z0-9.-]+", "-", host.lower()).strip("-") or "host"
+
+
+def _esc(text: str) -> str:
+    import html as _html
+    return _html.escape(str(text))
+
+
+def assessment_markdown(report: dict[str, Any]) -> str:
+    date = time.strftime("%Y-%m-%d")
+    lines = [
+        f"# Assessment — {report['target']} — {date}",
+        "",
+        "Created by Parth Patel, founder of BenchBrex.com.",
+        "",
+        f"Scope: {report['scope']}",
+        f"Verdict: **{report['verdict']}** ({report['high_count']} high/critical).",
+        "",
+        "| Check | Verdict |",
+        "|---|---|",
+    ]
+    for name, result in report["checks"].items():
+        verdict = result.get("error") and "error" or result.get("verdict", "n/a")
+        lines.append(f"| {name} | {verdict} |")
+    lines += ["", "## Findings", "", "| Source | Severity | ID | Detail |", "|---|---|---|---|"]
+    for f in report["findings"]:
+        lines.append(f"| {f['source']} | {f['severity']} | {f['id']} | {str(f.get('detail', ''))[:180]} |")
+    if not report["findings"]:
+        lines.append("| — | — | none | no findings |")
+    if report["errors"]:
+        lines += ["", "## Check errors", ""] + [f"- {k}: {v}" for k, v in report["errors"].items()]
+    return "\n".join(lines) + "\n"
+
+
+def assessment_html(report: dict[str, Any]) -> str:
+    sev_cls = {"critical": "risk", "high": "risk", "medium": "warn", "low": "ok", "info": "ok"}
+    check_rows = "".join(
+        "<tr><td>" + _esc(name) + "</td><td>"
+        + _esc(r.get("error") and "error" or r.get("verdict", "n/a")) + "</td></tr>"
+        for name, r in report["checks"].items())
+    finding_rows = "".join(
+        "<tr><td>" + _esc(f["source"]) + "</td><td class='" + sev_cls.get(f["severity"], "")
+        + "'>" + _esc(f["severity"]) + "</td><td>" + _esc(f["id"]) + "</td><td>"
+        + _esc(str(f.get("detail", ""))[:200]) + "</td></tr>"
+        for f in report["findings"]) or "<tr><td colspan='4'>none</td></tr>"
+    return (
+        "<!DOCTYPE html><html><head><meta charset='utf-8'>"
+        "<title>BeGuardit Assessment — " + _esc(report["target"]) + "</title><style>"
+        "body{font-family:-apple-system,Helvetica,Arial,sans-serif;margin:2rem;max-width:900px;color:#1a1a2e}"
+        "h1{font-size:1.4rem;border-bottom:3px solid #16213e;padding-bottom:.4rem}"
+        "h2{font-size:1.05rem;margin-top:1.6rem}"
+        "table{border-collapse:collapse;width:100%;margin:1rem 0}"
+        "th,td{border:1px solid #ccd;padding:.45rem .6rem;text-align:left;font-size:.85rem}"
+        "th{background:#16213e;color:#fff}.risk{color:#b00020;font-weight:600}"
+        ".warn{color:#b26a00;font-weight:600}.ok{color:#1b5e20}"
+        ".meta{color:#555;font-size:.8rem}"
+        ".foot{margin-top:2rem;color:#777;font-size:.75rem;border-top:1px solid #ddd;padding-top:.6rem}"
+        "</style></head><body>"
+        "<h1>BeGuardit Security Assessment — " + _esc(report["target"]) + "</h1>"
+        "<p class='meta'>Generated " + time.strftime("%Y-%m-%d %H:%M %Z")
+        + " — verdict: <b>" + _esc(report["verdict"]) + "</b> ("
+        + str(report["high_count"]) + " high/critical)</p>"
+        "<h2>Checks</h2><table><tr><th>Check</th><th>Verdict</th></tr>" + check_rows + "</table>"
+        "<h2>Findings</h2><table><tr><th>Source</th><th>Severity</th><th>ID</th><th>Detail</th></tr>"
+        + finding_rows + "</table>"
+        "<p class='meta'>Scope: " + _esc(report["scope"]) + "</p>"
+        "<div class='foot'>Created by Parth Patel, founder of BenchBrex.com (BeGuardit / BenchBrex).<br>"
+        "CONFIDENTIAL — authorized assessment of an owned host.</div></body></html>")
+
+
+def save_assessment(report: dict[str, Any]) -> dict[str, str]:
+    """Write the engagement record + client HTML. Returns their paths."""
+    directory = _volume_root() / "engagements"
+    directory.mkdir(parents=True, exist_ok=True)
+    base = f"{time.strftime('%Y-%m-%d')}-{_slug(report['target'])}.assess"
+    md_path = directory / f"{base}.md"
+    html_path = directory / f"{base}.html"
+    md_path.write_text(assessment_markdown(report))
+    html_path.write_text(assessment_html(report))
+    return {"markdown": str(md_path), "html": str(html_path)}
+
+
+def assess(target: str, allow_external: bool, deep: bool = False) -> dict[str, Any]:
+    """One-command engagement over an authorized host: web + tls (+deep) + map.
+
+    Tailscale context is added when the target is this machine (local scope).
+    """
+    author = "Created by Parth Patel, founder of BenchBrex.com"
+    auth = authorization(target, allow_external)
+    if not auth.get("allowed"):
+        return {"author": author, "error": "unauthorized target",
+                "detail": auth.get("reason"), "authorization": auth}
+    checks: dict[str, dict[str, Any]] = {
+        "web": web_posture(target, allow_external),
+        "tls": tls_posture(target, allow_external, deep=deep),
+        "map": site_map(target, allow_external),
+    }
+    if all(_is_local_scope(ip) for ip in auth.get("resolved", [])):
+        checks["tailscale"] = tailscale_posture()
+    findings = aggregate_findings(checks)
+    errors = {name: (r.get("detail") or r.get("error"))
+              for name, r in checks.items() if r.get("error")}
+    severe = [f for f in findings if f.get("severity") in ("high", "critical")]
+    return {
+        "author": author,
+        "target": target,
+        "deep_tls": deep,
+        "authorization": auth,
+        "checks": checks,
+        "findings": findings,
+        "errors": errors,
+        "high_count": len(severe),
+        "verdict": "ATTENTION" if severe else "NO HIGH FINDINGS",
+        "scope": ("Owner-authorized. GET/handshake checks only: no logins, "
+                  "no POST, no exploits. Shared-host friendly (sequential map)."),
+    }
+
+
 if __name__ == "__main__":
     import argparse
     import json as _json
 
     ap = argparse.ArgumentParser(description="BG Recon posture CLI")
-    ap.add_argument("action", choices=["posture", "baseline-save", "baseline-diff", "report", "scan", "web", "tls", "map", "web-history", "tailscale"])
+    ap.add_argument("action", choices=["posture", "baseline-save", "baseline-diff", "report", "scan", "web", "tls", "map", "web-history", "tailscale", "assess"])
     ap.add_argument("--out", default=None)
     ap.add_argument("--target", default=None)
     ap.add_argument("--ports", default=None)
     ap.add_argument("--path", default="/")
     ap.add_argument("--allow-external", action="store_true")
+    ap.add_argument("--deep", action="store_true")
     a = ap.parse_args()
     if a.action == "scan":
         if not a.target:
@@ -1183,6 +1421,14 @@ if __name__ == "__main__":
         report = tailscale_posture()
         print(_json.dumps(report, indent=1))
         raise SystemExit(1 if report.get("high_count") else 0)
+    elif a.action == "assess":
+        if not a.target:
+            raise SystemExit("assess requires --target")
+        report = assess(a.target, a.allow_external, deep=a.deep)
+        if not report.get("error"):
+            report["engagement"] = save_assessment(report)
+        print(_json.dumps(report, indent=1))
+        raise SystemExit(1 if report.get("error") or report.get("high_count") else 0)
     elif a.action == "posture":
         print(_json.dumps(posture(), indent=1))
     elif a.action == "baseline-save":

@@ -23,3 +23,6 @@ status_report.json
 __pycache__/
 *.pyc
 .pytest_cache/
+
+# third-party GPL tool, installed not vendored (see THIRD_PARTY_NOTICES.md)
+tools/testssl.sh/
