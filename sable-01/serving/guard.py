@@ -209,7 +209,11 @@ class Guard(BaseHTTPRequestHandler):
                     "latency_s": {"p50": pct(0.50), "p95": pct(0.95), "count": n},
                 })
             return
-        # every other GET forwards to the backend unchanged
+        # every other GET is the OpenAI surface only — do not proxy arbitrary paths
+        path_only = self.path.split("?", 1)[0]
+        if not path_only.startswith("/v1/"):
+            self._json(404, {"error": "not found"})
+            return
         try:
             with urllib.request.urlopen(f"{BACKEND}{self.path}", timeout=15) as resp:
                 self._send(resp.status, resp.read(), resp.headers.get("Content-Type", "application/json"))
@@ -226,7 +230,16 @@ class Guard(BaseHTTPRequestHandler):
         if shutting_down:
             self._json(503, {"error": "shutting down — drain in progress"})
             return
-        length = int(self.headers.get("Content-Length", 0) or 0)
+        length_raw = self.headers.get("Content-Length", "0") or "0"
+        try:
+            length = int(length_raw)
+        except ValueError:
+            self._json(400, {"error": "Content-Length must be an integer"})
+            return
+        # negative length makes rfile.read() drain the socket unbounded — reject
+        if length < 0:
+            self._json(400, {"error": "Content-Length must be >= 0"})
+            return
         if length > MAX_BODY_BYTES:
             self._json(413, {"error": f"request body too large ({length} bytes; cap {MAX_BODY_BYTES})"})
             return
@@ -278,7 +291,7 @@ class Guard(BaseHTTPRequestHandler):
                 if not isinstance(m["content"], str):
                     m["content"] = json.dumps(m["content"], ensure_ascii=False)
             mt = payload.get("max_tokens", 512)
-            if not isinstance(mt, int) or not 1 <= mt <= 8192:
+            if isinstance(mt, bool) or not isinstance(mt, int) or not 1 <= mt <= 8192:
                 self._json(400, {"error": "'max_tokens' must be an integer in [1, 8192]"})
                 return
             temp = payload.get("temperature", 0.3)

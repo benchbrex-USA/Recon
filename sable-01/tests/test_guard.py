@@ -269,6 +269,24 @@ class TestGuard(unittest.TestCase):
         self.assertEqual(d["by_status"].get("200"), 1)  # JSON keys are strings
         self.assertEqual(d["latency_s"]["count"], 1)
 
+    def test_t24_negative_content_length_rejected(self):
+        h = make_handler(b"{}", headers={"Content-Length": "-1"})
+        with patch.object(g, "forward", ok_forward), patch.object(g, "log_request", lambda b: None):
+            h.do_POST()
+        self.assertEqual(h.out[0], 400)
+        self.assertIn(">= 0", h.out[1])
+
+    def test_t25_bool_max_tokens_rejected(self):
+        code, _, _ = self.run_post(
+            {"model": "m", "max_tokens": True,
+             "messages": [{"role": "user", "content": "q"}]})
+        self.assertEqual(code, 400)
+
+    def test_t26_non_v1_get_not_proxied(self):
+        h = make_handler(b"", path="/admin")
+        h.do_GET()
+        self.assertEqual(h.out[0], 404)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
