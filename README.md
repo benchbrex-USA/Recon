@@ -1,10 +1,31 @@
 # Recon — BeGuardit Hacking Tools
 
-Proprietary, authorization-gated security-assessment platform for one operator:
-owned-host reconnaissance, website and TLS posture, an AI red-team harness, a
-local exploitation range, and an offline cyber model behind a hardening proxy.
+Assess only what you own. One command center for host posture, owned-site
+checks, an AI red-team harness, a local lab, and an offline model.
 
 **Created by Parth Patel, founder of BenchBrex.com** (BeGuardit / BenchBrex).
+
+## Contents
+
+- [Status](#status)
+- [What this is](#what-this-is)
+- [Why it exists](#why-it-exists)
+- [Who it is for](#who-it-is-for)
+- [Requirements](#requirements)
+- [Quick start](#quick-start)
+- [Command reference](#command-reference)
+- [Architecture](#architecture)
+- [Authorization model](#authorization-model)
+- [Verification](#verification)
+- [Known limits](#known-limits)
+- [Repository layout](#repository-layout)
+- [CI](#ci)
+- [Security](#security)
+- [Contributing](#contributing)
+- [Citation](#citation)
+- [License](#license)
+
+## Status
 
 | | |
 |---|---|
