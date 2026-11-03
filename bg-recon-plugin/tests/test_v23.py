@@ -8,10 +8,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-spec = importlib.util.spec_from_file_location(
-    "recon",
-    "/Volumes/Parth Patel/BeGuardit Hacking Tools/bg-recon-plugin/dashboard/plugin_api.py",
-)
+PLUGIN = Path(__file__).resolve().parents[1] / "dashboard" / "plugin_api.py"
+spec = importlib.util.spec_from_file_location("recon", str(PLUGIN))
 recon = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(recon)
 
