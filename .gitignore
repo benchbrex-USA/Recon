@@ -26,3 +26,6 @@ __pycache__/
 
 # third-party GPL tool, installed not vendored (see THIRD_PARTY_NOTICES.md)
 tools/testssl.sh/
+
+# third-party JVM tool, installed not vendored
+tools/zap/

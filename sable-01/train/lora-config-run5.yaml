@@ -1,0 +1,25 @@
+# Sable-01 LoRA run 5 — tool-context + security-reasoning (T-10, K-04, v2.2-v2.5 capability, corrected exposure answer)
+# Created by Parth Patel, founder of BenchBrex.com (BeGuardit / BenchBrex).
+# Fresh from base on the 212-row dataset (192 from run 4 + 20 new).
+# Root-cause fix for run 2 (1/10 tool emission): the dataset had ZERO
+# tool-context rows; run 3 teaches call emission AND no-call discrimination.
+
+model: /Users/benchbrex/sable-01/base
+data: /Users/benchbrex/sable-01/train-r5
+train: true
+fine_tune_type: lora
+
+rank: 16
+alpha: 32
+dropout: 0.0
+num_layers: 16
+
+batch_size: 1
+iters: 300
+learning_rate: 0.0001
+steps_per_report: 25
+steps_per_eval: 100
+save_every: 100
+adapter_path: /Users/benchbrex/sable-01/adapters/r16-run5
+max_seq_length: 1024
+seed: 42

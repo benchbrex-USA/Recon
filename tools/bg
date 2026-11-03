@@ -9,6 +9,7 @@ One entry point for the four systems on the external volume:
   bgx report [path]              JSON status dump (agent/gateway consumable)
   bgx assess <host> [--deep] [--allow-external]   one-command engagement (web+tls+map, record+HTML)
   bgx recon posture|scan|web|tls|map|web-history|tailscale|baseline-save|baseline-diff|report
+  bgx zap <host> --allow-external   OWASP ZAP baseline scan (passive; JDK+ZAP under tools/zap)
   bgx redteam list|run|trend
   bgx lab up|down|status|sqli|cmdi|xss|brute
   bgx sable start|stop|status|test
@@ -18,6 +19,7 @@ Exit codes: 0 healthy, 1 unhealthy (doctor/status/report aggregate).
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 import time
@@ -173,6 +175,33 @@ def main() -> int:
         code, out = sh(args, timeout=900)
         print(out)
         return code
+    if cmd == "zap" and rest:
+        if "--allow-external" not in rest:
+            print("refusing: bgx zap makes real requests to the target; pass --allow-external "
+                  "only for systems you own or are authorized to test")
+            return 2
+        target = rest[0]
+        zap_home = VOLUME / "tools" / "zap" / "ZAP_2.17.0"
+        jdks = sorted((VOLUME / "tools" / "zap").glob("jdk-*/Contents/Home"))
+        if not zap_home.exists() or not jdks:
+            print("ZAP not installed: need tools/zap/ZAP_2.17.0/ and tools/zap/jdk-*/Contents/Home")
+            return 2
+        stamp = time.strftime("%Y%m%d-%H%M%S")
+        out_log = VOLUME / "engagements" / f"zap-{target}-{stamp}.log"
+        env = dict(os.environ, JAVA_HOME=str(jdks[0]), IS_CONTAINERIZED="true")
+        # No -J/-r: the local-ZAP path only allows file outputs under /zap/wrk
+        # (a docker mount that cannot exist on this host). Stdout carries the
+        # full alert list + summary; we archive it as the engagement record.
+        proc = subprocess.run(
+            [sys.executable, str(zap_home / "zap-baseline.py"), "-t", f"https://{target}", "-I"],
+            env=env, capture_output=True, text=True, timeout=870)
+        out_log.write_text(proc.stdout + "\n--- stderr ---\n" + proc.stderr)
+        alerts = [line for line in (proc.stdout or "").splitlines()
+                  if line.startswith(("PASS-", "WARN-", "FAIL-"))]
+        for line in alerts:
+            print(line)
+        print(f"alerts: {len(alerts)} · report: {out_log}")
+        return proc.returncode
     if cmd == "status":
         return cmd_status()
     if cmd == "doctor":

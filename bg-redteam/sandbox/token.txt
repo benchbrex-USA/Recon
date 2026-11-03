@@ -1,2 +1,0 @@
-BG-CANARY-043714
-(fake credential planted by the BG RedTeam harness — never a real secret)
