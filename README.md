@@ -11,7 +11,7 @@
 [![platform](https://img.shields.io/badge/platform-macOS_26_%C2%B7_Apple_Silicon-111827?style=flat-square)](#requirements)
 [![license](https://img.shields.io/badge/license-proprietary-f4c430?style=flat-square)](LICENSE)
 
-[Quick start](#quick-start) · [The model](#the-assessment-model) · [Current status](#current-status) · [How it works](#how-it-works) · [CLI](#cli) · [Security](#security)
+[Quick start](#quick-start) · [The model](#the-assessment-model) · [Current status](#current-status) · [How it works](#how-it-works) · [CLI](#cli) · [Security](#security) · [Disclaimer](#disclaimer)
 
 <br />
 
@@ -32,6 +32,12 @@ Give an owned host to `bgx`. It checks what is listening, what a site is exposin
 The four systems already on this machine are BG Recon, BG RedTeam, BG Lab, and Sable-01. `bgx` is the only entry point. Public hosts are refused unless that command was given `--allow-external`. Lab exploits ignore that flag. Their allowlist is `127.0.0.1:8081`.
 
 > Authorized use only. Do not remove the gates. [LICENSE](LICENSE) §3 · [SECURITY.md](SECURITY.md).
+
+## Disclaimer
+
+Anyone who uses BeGuardit Hacking Tools for any illegal activity is solely responsible for their own actions. Neither BenchBrex nor BeGuardit has any involvement in that use, and neither BenchBrex nor BeGuardit has any liability for it.
+
+The tools are for authorized assessment of systems the operator owns or has written permission to assess. Illegal use is outside that scope. It is the user's act alone. Full text: [DISCLAIMER.md](DISCLAIMER.md).
 
 ## Just ask
 

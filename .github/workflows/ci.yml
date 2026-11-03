@@ -44,11 +44,11 @@ jobs:
           # LICENSE (copyright notice) and CITATION.cff (structured authors)
           # attribute by form; the doc set must carry the literal banner.
           # Loop form — BSD grep -L exit codes are unreliable.
-          for f in README.md USER-GUIDE.md CHANGELOG.md CONTRIBUTING.md SECURITY.md; do
+          for f in README.md USER-GUIDE.md CHANGELOG.md CONTRIBUTING.md SECURITY.md DISCLAIMER.md; do
             grep -qF "Created by Parth Patel, founder of BenchBrex.com" "$f" \
               || { echo "MISSING attribution: $f"; exit 1; }
           done
-          echo "attribution: all 5 files carry the banner"
+          echo "attribution: all 6 files carry the banner"
 
   recon-suite:
     runs-on: ubuntu-latest

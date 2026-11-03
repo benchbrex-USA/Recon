@@ -4,6 +4,8 @@ Created by Parth Patel, founder of BenchBrex.com (BeGuardit / BenchBrex).
 
 **Maintainer:** Parth Patel, founder of BenchBrex.com
 
+Illegal use of these tools is the user's act alone. Neither BenchBrex nor BeGuardit has any involvement in, or liability for, that use. [DISCLAIMER.md](DISCLAIMER.md).
+
 ## Supported versions
 
 Security fixes are provided for `main` (release line v2.6). This repository is private and owner-operated. There is no supported external release.
