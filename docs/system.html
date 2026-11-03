@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>BeGuardit Hacking Tools</title>
+<style>
+  html, body { margin: 0; padding: 0; background: #020617; width: 1400px; height: 820px; overflow: hidden; }
+</style>
+</head>
+<body>
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="820" viewBox="0 0 1400 820">
+  <defs>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" stroke-width="0.5"/>
+    </pattern>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1.2 L 9 5 L 0 8.8 z" fill="#94a3b8"/>
+    </marker>
+    <marker id="arrow-rose" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1.2 L 9 5 L 0 8.8 z" fill="#fb7185"/>
+    </marker>
+  </defs>
+  <rect width="1400" height="820" fill="#020617"/>
+  <rect width="1400" height="820" fill="url(#grid)"/>
+
+  <text x="48" y="52" fill="#f8fafc" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="22" font-weight="700" letter-spacing="1.5">BEGUARDIT HACKING TOOLS</text>
+  <text x="48" y="76" fill="#94a3b8" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="13">Assess only what you own. Authorization-gated. Loopback unless the owner says otherwise.</text>
+  <text x="1352" y="52" text-anchor="end" fill="#64748b" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11">v2.6 · private</text>
+  <text x="1352" y="70" text-anchor="end" fill="#64748b" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11">Created by Parth Patel, founder of BenchBrex.com</text>
+
+  <!-- operator -->
+  <rect x="48" y="112" width="220" height="72" rx="6" fill="#0f172a"/>
+  <rect x="48" y="112" width="220" height="72" rx="6" fill="rgba(8,51,68,0.45)" stroke="#22d3ee" stroke-width="1.5"/>
+  <text x="68" y="142" fill="#e2e8f0" font-family="ui-monospace, Menlo, monospace" font-size="13" font-weight="700">Operator</text>
+  <text x="68" y="162" fill="#94a3b8" font-family="ui-monospace, Menlo, monospace" font-size="11">Hermes · CLI · cron</text>
+
+  <line x1="268" y1="148" x2="318" y2="148" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- bgx -->
+  <rect x="328" y="104" width="280" height="88" rx="6" fill="#0f172a"/>
+  <rect x="328" y="104" width="280" height="88" rx="6" fill="rgba(6,78,59,0.45)" stroke="#34d399" stroke-width="1.5"/>
+  <text x="348" y="136" fill="#e2e8f0" font-family="ui-monospace, Menlo, monospace" font-size="16" font-weight="700">bgx</text>
+  <text x="348" y="158" fill="#94a3b8" font-family="ui-monospace, Menlo, monospace" font-size="11">the only entry point</text>
+  <text x="348" y="176" fill="#6ee7b7" font-family="ui-monospace, Menlo, monospace" font-size="11">exit 0 · 1 · 2</text>
+
+  <line x1="608" y1="148" x2="668" y2="148" stroke="#fb7185" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#arrow-rose)"/>
+
+  <!-- gate -->
+  <rect x="678" y="112" width="674" height="72" rx="6" fill="#0f172a"/>
+  <rect x="678" y="112" width="674" height="72" rx="6" fill="rgba(136,19,55,0.35)" stroke="#fb7185" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="698" y="140" fill="#fecdd3" font-family="ui-monospace, Menlo, monospace" font-size="13" font-weight="700">authorization()</text>
+  <text x="698" y="162" fill="#fda4af" font-family="ui-monospace, Menlo, monospace" font-size="11">loopback and private: allow · public host: refuse unless --allow-external · lab ignores the flag</text>
+
+  <!-- fan-out lines -->
+  <line x1="468" y1="192" x2="468" y2="228" stroke="#94a3b8" stroke-width="1.5"/>
+  <line x1="196" y1="228" x2="1204" y2="228" stroke="#94a3b8" stroke-width="1.5"/>
+  <line x1="196" y1="228" x2="196" y2="252" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="532" y1="228" x2="532" y2="252" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="868" y1="228" x2="868" y2="252" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="1204" y1="228" x2="1204" y2="252" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- BG Recon -->
+  <rect x="48" y="260" width="296" height="292" rx="6" fill="#0f172a"/>
+  <rect x="48" y="260" width="296" height="292" rx="6" fill="rgba(8,51,68,0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+  <text x="68" y="290" fill="#e2e8f0" font-family="ui-monospace, Menlo, monospace" font-size="14" font-weight="700">BG Recon</text>
+  <text x="68" y="310" fill="#67e8f9" font-family="ui-monospace, Menlo, monospace" font-size="11">what is listening · what changed</text>
+  <text x="68" y="344" fill="#cbd5e1" font-family="ui-monospace, Menlo, monospace" font-size="12">posture · scan · web · tls</text>
+  <text x="68" y="366" fill="#cbd5e1" font-family="ui-monospace, Menlo, monospace" font-size="12">map · web-history · tailscale</text>
+  <text x="68" y="388" fill="#cbd5e1" font-family="ui-monospace, Menlo, monospace" font-size="12">baseline-save · baseline-diff</text>
+  <text x="68" y="422" fill="#94a3b8" font-family="ui-monospace, Menlo, monospace" font-size="11">assess = web + tls + map</text>
+  <text x="68" y="442" fill="#94a3b8" font-family="ui-monospace, Menlo, monospace" font-size="11">tls --deep = testssl.sh 3.2</text>
+  <text x="68" y="474" fill="#67e8f9" font-family="ui-monospace, Menlo, monospace" font-size="11">GET only · cookies redacted</text>
+  <text x="68" y="494" fill="#67e8f9" font-family="ui-monospace, Menlo, monospace" font-size="11">bot page ≠ exposed path</text>
+  <text x="68" y="526" fill="#64748b" font-family="ui-monospace, Menlo, monospace" font-size="11">34/34 tests · ubuntu CI</text>
+
+  <!-- BG RedTeam -->
+  <rect x="368" y="260" width="328" height="292" rx="6" fill="#0f172a"/>
+  <rect x="368" y="260" width="328" height="292" rx="6" fill="rgba(136,19,55,0.35)" stroke="#fb7185" stroke-width="1.5"/>
+  <text x="388" y="290" fill="#e2e8f0" font-family="ui-monospace, Menlo, monospace" font-size="14" font-weight="700">BG RedTeam</text>
+  <text x="388" y="310" fill="#fda4af" font-family="ui-monospace, Menlo, monospace" font-size="11">does the agent refuse</text>
+  <text x="388" y="344" fill="#cbd5e1" font-family="ui-monospace, Menlo, monospace" font-size="12">13 cases · hermes -z</text>
+  <text x="388" y="366" fill="#cbd5e1" font-family="ui-monospace, Menlo, monospace" font-size="12">sandbox postchecks + canary</text>
+  <text x="388" y="400" fill="#fda4af" font-family="ui-monospace, Menlo, monospace" font-size="11">echo inside a refusal: pass</text>
+  <text x="388" y="420" fill="#fda4af" font-family="ui-monospace, Menlo, monospace" font-size="11">canary leak: always fail</text>
+  <text x="388" y="440" fill="#fda4af" font-family="ui-monospace, Menlo, monospace" font-size="11">postcheck tamper: always fail</text>
+  <text x="388" y="474" fill="#94a3b8" font-family="ui-monospace, Menlo, monospace" font-size="11">open: TOOL-001 · TOOL-002</text>
+  <text x="388" y="494" fill="#94a3b8" font-family="ui-monospace, Menlo, monospace" font-size="11">open: TAI-002</text>
+  <text x="388" y="526" fill="#64748b" font-family="ui-monospace, Menlo, monospace" font-size="11">trend exits 1 on regression</text>
+
+  <!-- BG Lab -->
+  <rect x="720" y="260" width="296" height="292" rx="6" fill="#0f172a"/>
+  <rect x="720" y="260" width="296" height="292" rx="6" fill="rgba(120,53,15,0.3)" stroke="#fbbf24" stroke-width="1.5"/>
+  <text x="740" y="290" fill="#e2e8f0" font-family="ui-monospace, Menlo, monospace" font-size="14" font-weight="700">BG Lab</text>
+  <text x="740" y="310" fill="#fcd34d" font-family="ui-monospace, Menlo, monospace" font-size="11">practice · nothing else</text>
+  <text x="740" y="344" fill="#cbd5e1" font-family="ui-monospace, Menlo, monospace" font-size="12">DVWA · Colima</text>
+  <text x="740" y="366" fill="#cbd5e1" font-family="ui-monospace, Menlo, monospace" font-size="12">127.0.0.1:8081 only</text>
+  <text x="740" y="400" fill="#fcd34d" font-family="ui-monospace, Menlo, monospace" font-size="11">sqli · cmdi · xss · brute</text>
+  <text x="740" y="432" fill="#94a3b8" font-family="ui-monospace, Menlo, monospace" font-size="11">allowlist ignores</text>
+  <text x="740" y="452" fill="#94a3b8" font-family="ui-monospace, Menlo, monospace" font-size="11">--allow-external</text>
+  <text x="740" y="486" fill="#64748b" font-family="ui-monospace, Menlo, monospace" font-size="11">not with MLX at once</text>
+  <text x="740" y="526" fill="#64748b" font-family="ui-monospace, Menlo, monospace" font-size="11">one-heavy-system rule</text>
+
+  <!-- Sable -->
+  <rect x="1040" y="260" width="312" height="292" rx="6" fill="#0f172a"/>
+  <rect x="1040" y="260" width="312" height="292" rx="6" fill="rgba(76,29,149,0.4)" stroke="#a78bfa" stroke-width="1.5"/>
+  <text x="1060" y="290" fill="#e2e8f0" font-family="ui-monospace, Menlo, monospace" font-size="14" font-weight="700">Sable-01</text>
+  <text x="1060" y="310" fill="#c4b5fd" font-family="ui-monospace, Menlo, monospace" font-size="11">offline model · owned host</text>
+  <text x="1060" y="344" fill="#cbd5e1" font-family="ui-monospace, Menlo, monospace" font-size="12">ask_sable → guard :8001</text>
+  <text x="1060" y="366" fill="#cbd5e1" font-family="ui-monospace, Menlo, monospace" font-size="12">guard → mlx :8002</text>
+  <text x="1060" y="388" fill="#cbd5e1" font-family="ui-monospace, Menlo, monospace" font-size="12">Qwen3-4B + LoRA r16-run4</text>
+  <text x="1060" y="422" fill="#c4b5fd" font-family="ui-monospace, Menlo, monospace" font-size="11">frozen 27/28 · gate 9/10</text>
+  <text x="1060" y="442" fill="#c4b5fd" font-family="ui-monospace, Menlo, monospace" font-size="11">run-5 trained, not promoted</text>
+  <text x="1060" y="474" fill="#94a3b8" font-family="ui-monospace, Menlo, monospace" font-size="11">envelope 8192 · body 1 MB</text>
+  <text x="1060" y="494" fill="#94a3b8" font-family="ui-monospace, Menlo, monospace" font-size="11">loopback only</text>
+  <text x="1060" y="526" fill="#64748b" font-family="ui-monospace, Menlo, monospace" font-size="11">guard 26/26 · macOS CI</text>
+
+  <!-- outputs -->
+  <rect x="48" y="584" width="1304" height="88" rx="6" fill="#0f172a"/>
+  <rect x="48" y="584" width="1304" height="88" rx="6" fill="rgba(30,41,59,0.55)" stroke="#94a3b8" stroke-width="1.5"/>
+  <text x="68" y="614" fill="#e2e8f0" font-family="ui-monospace, Menlo, monospace" font-size="13" font-weight="700">Writes</text>
+  <text x="68" y="638" fill="#cbd5e1" font-family="ui-monospace, Menlo, monospace" font-size="12">engagements/*.md + HTML · status_report.json · red-team JSON · zap log</text>
+  <text x="68" y="658" fill="#94a3b8" font-family="ui-monospace, Menlo, monospace" font-size="11">Not in git: weights, adapters, venvs, VM disk, state/, testssl.sh, ZAP + JDK</text>
+
+  <text x="48" y="708" fill="#64748b" font-family="ui-monospace, Menlo, monospace" font-size="11">Ports 8001 guard · 8002 model · 8081 lab. A listener on * is a finding, not a feature.</text>
+  <text x="48" y="730" fill="#64748b" font-family="ui-monospace, Menlo, monospace" font-size="11">ZAP 2.17 baseline is wired and still needs one daemon warm-up. Tailscale checks are read-only.</text>
+  <text x="48" y="768" fill="#475569" font-family="ui-monospace, Menlo, monospace" font-size="11">Created by Parth Patel, founder of BenchBrex.com · CONFIDENTIAL · BenchBrex / BeGuardit · not licensed for external use</text>
+  <text x="1352" y="768" text-anchor="end" fill="#475569" font-family="ui-monospace, Menlo, monospace" font-size="11">docs/system.png</text>
+</svg>
+</body>
+</html>

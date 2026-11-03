@@ -5,6 +5,8 @@ checks, an AI red-team harness, a local lab, and an offline model.
 
 **Created by Parth Patel, founder of BenchBrex.com** (BeGuardit / BenchBrex).
 
+![BeGuardit Hacking Tools: operator, bgx, authorization gate, BG Recon, BG RedTeam, BG Lab, and Sable-01](docs/system.png)
+
 ## Contents
 
 - [Status](#status)
