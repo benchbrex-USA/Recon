@@ -146,7 +146,7 @@ bgx doctor
 
 ## Current status
 
-Release line **v2.6**. Numbers are from executed runs in [CHANGELOG.md](CHANGELOG.md), not targets. The gate badge above is a recorded result. This repository is private, so it is not a live Shields status.
+Release line **v2.6**. Numbers are from executed runs in [CHANGELOG.md](CHANGELOG.md), not targets. The gate badge above is a recorded result, not a live status check.
 
 | | |
 | --- | --- |
@@ -268,4 +268,4 @@ Proprietary. All rights reserved. Dual-use capabilities are limited to authorize
 
 ---
 
-*Created by Parth Patel, founder of BenchBrex.com (BeGuardit / BenchBrex). CONFIDENTIAL — internal to BenchBrex. Not licensed for external use.*
+*Created by Parth Patel, founder of BenchBrex.com (BeGuardit / BenchBrex). Public repository. Proprietary. Not licensed for external use.*
