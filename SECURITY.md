@@ -1,52 +1,41 @@
-# Security Policy — Recon (BeGuardit Hacking Tools)
+# Security Policy
 
 Created by Parth Patel, founder of BenchBrex.com (BeGuardit / BenchBrex).
 
-**Maintainer:** Parth Patel, founder of BenchBrex.com (BeGuardit / BenchBrex)
+**Maintainer:** Parth Patel, founder of BenchBrex.com
 
-## 1. What this repository is
+## Supported versions
 
-A proprietary, authorization-gated security-assessment toolchain: a TCP/port
-and posture scanner (BG Recon), an AI red-team harness (BG RedTeam), a local
-exploitation range (BG Lab), and an owned local language model with a hardening
-proxy (Sable-01). All network capabilities enforce authorization allowlists and
-bind to loopback only.
+Security fixes are provided for `main` (release line v2.6). This repository is private and owner-operated. There is no supported external release.
 
-## 2. Responsible use (non-negotiable)
+## Reporting a vulnerability
 
-- Operate only against systems and agents **you own or have express written
-  authorization** to assess. The tools refuse non-allow-listed targets; do not
-  attempt to bypass those gates.
-- The exploitation modules are scoped to the local lab containers
-  (127.0.0.1:8081) by an allowlist in each module.
-- Do not remove authorization gates. A gate removal is a license violation
-  (see LICENSE §3) and voids the tooling's design guarantees.
+Do not disclose vulnerabilities, proof-of-concept exploits, credentials, session cookies, or private engagement records in a public issue. This repository has no public issue tracker for that purpose.
 
-## 3. Reporting a vulnerability in this toolchain
+Use **Report a vulnerability** in the repository's **Security** tab as the preferred way to submit the report privately. If GitHub private reporting is unavailable, contact the maintainer through an existing private channel. Do not open a public issue to request a private contact channel.
 
-Report privately — do not open a public issue for a security defect.
+Include the affected component (`bgx`, BG Recon, BG RedTeam, BG Lab, or Sable-01), operating system, impact, and reproduction conditions. Remove credentials, cookie values, adapter weights, and unrelated local paths from logs.
 
-1. **Preferred:** GitHub private vulnerability reporting
-   (Security tab → "Report a vulnerability") on this repository.
-2. **Alternative:** contact the maintainer directly (Parth Patel, BenchBrex)
-   through existing private channels.
+The maintainer will acknowledge the report and coordinate a fix. A report that only restates a boundary listed below, with no new impact, is informational.
 
-Include: affected component, reproduction steps, observed vs expected behavior,
-and any log/metrics output. You will receive an acknowledgement and a fix or
-mitigation plan.
+## Security boundary
 
-## 4. Known design boundaries (declared, not vulnerabilities)
+`bgx` resolves the target before it connects. Loopback and private addresses are allowed. A public address is allowed only when that command was given `--allow-external`. That flag is an explicit acknowledgment for one invocation. It is not a default, and it is not a sandbox.
 
-- Single-user trust model: the guard assumes the local operator is trusted.
-- The red-team harness scores transcripts, not out-of-band side effects.
-- The rate-limit window resets on guard restart (single-user residual).
-- Tool-gate residual T-10: unauthorized-target requests inside a tool context
-  may receive a tool call instead of a refusal (frozen gate 9/10).
+Lab exercises ignore `--allow-external`. Their allowlist is `127.0.0.1:8081` and `localhost:8081`. Other targets are refused.
 
-These are documented in `sable-01/designs/` and the Master Guide. Reports that
-restate a declared boundary without a new impact will be closed as informational.
+The model guard and the MLX server bind loopback. Opening them to `*` is a posture finding. Tailscale checks are read-only. This repository will not change Serve, Funnel, ACLs, or routes.
 
-## 5. Supported version
+Web, TLS, map, and assess are GET or handshake checks. Cookie values are redacted in reports. ZAP, when it runs, is the baseline (spider and passive rules) and still requires `--allow-external`. A failed ZAP daemon start is a tooling residual, not a completed scan.
 
-`main` only. The adapter provenance and gate results are recorded in
-`sable-01/PROVENANCE.md` and `sable-01/designs/`.
+These controls limit accidental use against a host the operator did not name. They do not protect against a process already running as the same user. They do not make the lab, the model, or ZAP a sandbox.
+
+### Declared, not vulnerabilities
+
+- Single-user trust model. The guard assumes the local operator is trusted.
+- The red-team harness scores the transcript and the sandbox postchecks. It does not score side effects outside that sandbox.
+- The rate-limit window resets when the guard restarts.
+- **T-10.** On the production adapter, an unauthorized-target request inside a tool context can still emit a tool call. Frozen tool gate is 9/10.
+- **TOOL-001**, **TOOL-002**, and **TAI-002** are confirmed agent-runtime failures. They are open. They are not harness scoring bugs.
+
+These are recorded in `sable-01/designs/` and [CHANGELOG.md](CHANGELOG.md).
