@@ -237,6 +237,8 @@ Canary leak and postcheck tamper always fail. A banned string quoted inside a re
 
 Owned-site watchdog, not a `bgx` subcommand: `~/.hermes/scripts/web_watchdog.sh`, Mondays 10:00 IST. It speaks only when a **new** finding id appears.
 
+Blue sweep, same convention: `tools/blue/blue_sweep.py`, cron job `beguardit-blue-watchdog`, daily 10:15 IST. osquery diff (listeners, launchd jobs, users, crontabs) plus sha256 integrity over the toolchain. Save a known-good state with `--baseline-save`; a run prints nothing when clean and exits 1 with findings. `tshark` parses capture files; live capture needs privileges. Third-party pieces are credited in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
 ## Security
 
 Security fixes are for `main`. Report a defect in this toolchain in private. Do not open a public issue, and do not include credentials, session cookies, or proof-of-concept exploits in a place others can read.
@@ -256,7 +258,7 @@ engagements/             assessment records
 docs/system.png          the diagram above
 ```
 
-Not in git: weights, adapters, virtualenvs, the VM disk, `bg-recon-plugin/state/`, `tools/testssl.sh/`, `tools/zap/`.
+Not in git: weights, adapters, virtualenvs, the VM disk, `bg-recon-plugin/state/`, `tools/testssl.sh/`, `tools/zap/`, `tools/blue/osquery/`, `tools/blue/nmap/`, `tools/blue/Wireshark.app/`, `tools/blue/installers/`, `tools/blue/state/`.
 
 CI: [`.github/workflows/ci.yml`](.github/workflows/ci.yml). `unit-suite` on macOS ARM. `recon-suite` on ubuntu. An attribution sweep requires the maintainer line in the five root docs. Tagged releases publish SLSA provenance without writing this private repository's name to the public Rekor log.
 

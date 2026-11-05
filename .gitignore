@@ -29,3 +29,11 @@ tools/testssl.sh/
 
 # third-party JVM tool, installed not vendored
 tools/zap/
+
+# Blue-sweep third-party installs and state (installed, not vendored)
+tools/blue/osquery/
+tools/blue/nmap/
+tools/blue/Wireshark.app/
+tools/blue/installers/
+tools/blue/state/
+tools/blue/demo-loopback.pcap
